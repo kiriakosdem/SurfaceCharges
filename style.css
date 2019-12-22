@@ -16,12 +16,20 @@ canvas {
   display: block;
 }
 
+canvas:hover{
+	cursor: grab;
+}
+
+canvas:active{
+	cursor: grabbing;
+}
+
 #jscode{
 	padding: 0rem;
 	margin: 0rem;
 	height: 100%;
 	width: 100%;
-	background-color: brown;
+	background-color: teal;
 }
 
 /*
@@ -45,6 +53,7 @@ background-size: contain;
 .mybutton:hover{
 	color: white;
 	background-color: midnightblue;
+	cursor: pointer;
 }
 
 

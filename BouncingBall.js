@@ -41,9 +41,14 @@ class BouncingBall {
 		translate(boxwidth/2,boxheight/2,boxdepth/2);
 	}	
 
+	spherecolission(){
+		let d = Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
+		if (d> 500 - this.radius){
+			
+		}
+	}
 
-
-	wallcolission() {
+	boxcolission() {
 		//bottom wall
 		if (this.y > ybox + boxheight - this.radius) {
 			this.y = ybox + boxheight - this.radius;

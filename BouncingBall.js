@@ -15,68 +15,79 @@ class BouncingBall {
 
 
 	move() {
-		
 		this.x += this.speedx;
 		this.y += this.speedy;
 		this.z += this.speedz;
-		
-		
 	}
 
 
 	show() {
+		//2D
 		//fill(map(velocitymag,0,2*this.maxspeed,0,255), 0, map(velocitymag,0,2*this.maxspeed,255,0));
 		//let alpha = map(this.z,0,boxdepth,0,255); 
 		//fill(alpha,0,255-alpha);
 		//strokeWeight(1);
 		//stroke(0,0,0,0);
 		//ellipse(this.x, this.y, this.diameter, this.diameter);
-
-		translate(-boxwidth/2,-boxheight/2,-boxdepth/2);
+		
+		//3D 
 		translate(this.x,this.y,this.z);
-		fill(0,0,50);
+		//fill(0,0,50);
+		specularMaterial(0,0,100);
 		noStroke();
-		sphere(this.diameter);
+		let conductor = sphere(this.diameter);
 		translate(-this.x,-this.y,-this.z);
-		translate(boxwidth/2,boxheight/2,boxdepth/2);
 	}	
 
-	spherecolission(){
+	spherecolission() {
+		//distance from center
 		let d = Math.sqrt(this.x*this.x + this.y*this.y + this.z*this.z);
-		if (d> 500 - this.radius){
+		//radial velocity
+		let rv = this.x*this.speedx/d + this.y*this.speedy/d + this.z*this.speedz/d;
+		
+		if (d> sphereDiameter - this.radius){
+			//move back into the sphere
+			let exsp = d - sphereDiameter + this.radius;
+			this.x -= exsp*this.x/d;
+			this.y -= exsp*this.y/d;
+			this.z -= exsp*this.z/d;
 			
+			//reverse radial velocity
+			this.speedx -= 2*rv*this.x/d;
+			this.speedy -= 2*rv*this.y/d;
+			this.speedz -= 2*rv*this.z/d;
 		}
 	}
 
 	boxcolission() {
 		//bottom wall
-		if (this.y > ybox + boxheight - this.radius) {
-			this.y = ybox + boxheight - this.radius;
+		if (this.y > ybox + boxheight/2 - this.radius) {
+			this.y = ybox + boxheight/2 - this.radius;
 			this.speedy *= -1;
 		}
 		//top wall
-		if (this.y < ybox + this.radius) {
-			this.y = ybox + this.radius;
+		if (this.y < ybox - boxheight/2 + this.radius) {
+			this.y = ybox - boxheight/2 + this.radius;
 			this.speedy *= -1;
 		}
 		//right wall
-		if (this.x > xbox + boxwidth - this.radius) {
-			this.x = xbox + boxwidth - this.radius;
+		if (this.x > xbox + boxwidth/2 - this.radius) {
+			this.x = xbox + boxwidth/2 - this.radius;
 			this.speedx *= -1;
 		}
 		//left wall
-		if (this.x < xbox + this.radius) {
-			this.x = xbox + this.radius;
+		if (this.x < xbox - boxwidth/2 + this.radius) {
+			this.x = xbox - boxwidth/2 + this.radius;
 			this.speedx *= -1;
 		}
 		//front wall
-		if (this.z > zbox + boxdepth - this.radius) {
-			this.z = zbox + boxdepth - this.radius;
+		if (this.z > zbox + boxdepth/2 - this.radius) {
+			this.z = zbox + boxdepth/2 - this.radius;
 			this.speedz *= -1;
 		}
 		//back wall
-		if (this.z < zbox + this.radius) {
-			this.z = zbox + this.radius;
+		if (this.z < zbox - boxdepth/2 + this.radius) {
+			this.z = zbox - boxdepth/2 + this.radius;
 			this.speedz *= -1;
 		}
 	}
@@ -126,17 +137,17 @@ class BouncingBall {
 
 	friction() {
 		let totalspeed = Math.sqrt(pow(this.speedx,2) + pow(this.speedy,2) + pow(this.speedy,2));
-		let smallpercent = 0.8;
-		let bigpercent = 0.8;
+		let smallspeed = 0.99;
+		let bigspeed = 0.95;
 
 		if (totalspeed < 0.1) {
-			this.speedx *= smallpercent;
-			this.speedy *= smallpercent;
-			this.speedz *= smallpercent;
+			this.speedx *= smallspeed;
+			this.speedy *= smallspeed;
+			this.speedz *= smallspeed;
 		} else {
-			this.speedx *= smallpercent;
-			this.speedy *= smallpercent;
-			this.speedz *= smallpercent;
+			this.speedx *= bigspeed;
+			this.speedy *= bigspeed;
+			this.speedz *= bigspeed;
 		}
 	}
 
@@ -150,30 +161,10 @@ class BouncingBall {
 
 		//calculate force
 		if (d>3*this.radius){
-			this.speedx += this.charge*elforce*dx/pow(d,3);
-			this.speedy += this.charge*elforce*dy/pow(d,3);
-			this.speedz += this.charge*elforce*dz/pow(d,3);
+			this.speedx += this.charge*forceStrength*dx/pow(d,3);
+			this.speedy += this.charge*forceStrength*dy/pow(d,3);
+			this.speedz += this.charge*forceStrength*dz/pow(d,3);
 		}
 	}
-
-
-	//selected(mx, my) {
-	//	let distance = dist(mx, my, this.x, this.y);
-	//	return (distance < this.diameter / 2);
-	//}
-
-
-	//rollover(mx, my) {
-	//	let selectedball = false;
-	//	let distance = dist(mx, my, this.x, this.y);
-	//	if (distance < this.diameter / 2) {
-	//  		this.green = 0;
-	// 		this.blue = 255;
-	//	}else{
-	//  		this.green = 255;
-	// 		this.blue = 255;
-	//	}
-	//}
-
 
 }

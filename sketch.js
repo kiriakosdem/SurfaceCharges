@@ -1,30 +1,41 @@
+//screen dimensions
 let fullscreenwidth = document.getElementById("jscode").clientWidth;//myscreen:1366;
 let fullscreenheight = document.getElementById('jscode').clientHeight;//myscreen:657;
 let animationwidth = fullscreenwidth;
 let animationheight = fullscreenheight*0.72;
 
-let boxwidth =500;
+//
+let boxwidth = 500;
 let boxheight = 500;
 let boxdepth = 500;
 let xbox = 0;
 let ybox = 0;
 let zbox = 0;
+let sphereDiameter = 300;
+let conductor;
 
-let balls = [];
-let Nparticles = 100;
+//animation variables
 let pi = 3.1415;
+let balls = [];
+let Nparticles;
+let forceStrength;
+let forceCoefficient = 100*100*10;
 let angle = 0;
-let anglerl = 0;
-let angletb = 0;
-let elforce = 10000/Nparticles;
-let zoom = 1;
 let sensitivityZoom = 0.06;
+let img;
 
+//html elements
 let mycanvas;
 let sliderScale;
 let sliderRotateX;
 let sliderRotateY;
 let sliderRotateZ;
+
+
+function preload(){
+	img = loadImage('images/lightning.png');
+}
+
 
 function setup() {
 	//create html elements
@@ -37,33 +48,10 @@ function setup() {
 	par = createP('Τα φορτία σε έναν αγωγό καταλήγουν όλα στην επιφάνειά του!');
 	par.style('padding-left','10px');
 	par.parent('jscode');
-
+	
+	setAttributes('antialias', true);
 	mycanvas = createCanvas(animationwidth, animationheight, WEBGL);
 	mycanvas.parent("jscode");
-
-//	sliderScale = createSlider(0, 0.99, 0, 0.01);
-//	sliderScale.parent('jscode');
-//	sliderScale.style('width', '200px');
-//	sliderScale.style('margin','20px');
-//	sliderScale.class('slider sliderScale');
-//
-//	sliderRotateX = createSlider(-pi/2, pi/2, -0.4, 0.01);
-//	sliderRotateX.parent('jscode');
-//	sliderRotateX.style('width', '200px');
-//	sliderRotateX.style('margin','20px');
-//	sliderRotateX.class('slider sliderRotate');
-//
-//	sliderRotateY = createSlider(-pi/2, pi/2, 0.5, 0.01);
-//	sliderRotateY.parent('jscode');
-//	sliderRotateY.style('width', '200px');
-//	sliderRotateY.style('margin','20px');
-//	sliderRotateY.class('slider sliderRotate');
-//
-//	sliderRotateZ = createSlider(-pi/2, pi/2, 0, 0.01);
-//	sliderRotateZ.parent('jscode');
-//	sliderRotateZ.style('width', '200px');
-//	sliderRotateZ.style('margin','20px');
-//	sliderRotateZ.class('slider sliderRotate');
 
 	sliderParticles = createSlider(1, 300);
 	sliderParticles.parent('jscode');
@@ -71,13 +59,13 @@ function setup() {
 	sliderParticles.style('margin','20px');
 	sliderParticles.class('slider sliderNumber');
 
-	buttonReset = createButton("Επαναφορά");
+	buttonReset = createButton("Επαναφορά Φορτίων");
 	buttonReset.parent("jscode");
-	buttonReset.style('width', '100px');
+	buttonReset.style('width', '150px');
 	buttonReset.style('margin','20px');
 	buttonReset.class('mybutton');
 	buttonReset.mousePressed(resetSketch);
-	
+
 	buttonResetCam = createButton("Επαναφορά Κάμερας");
 	buttonResetCam.parent("jscode");
 	buttonResetCam.style('width', '150px');
@@ -85,16 +73,18 @@ function setup() {
 	buttonResetCam.class('mybutton');
 	buttonResetCam.mousePressed(resetCamera);
 	
-	camera(0,0,2*(height/2.0)/tan(PI*30.0/180.0),  0,0,0,  0,1,0);
+	
+	camera(0,0,2.7*(height/2.0)/tan(PI*30.0/180.0),  0,0,0,  0,1,0);
+	perspective(0.6);
 	resetSketch();
 }
 
 
 function draw() {
-	
 	//set the scene
 	background(0, 60, 70);
-	lights();
+	ambientLight(255, 255, 255);
+	//pointLight(255,255,255, 0,0,0);	
 	orbitControl();
 	//debugMode();
 	rotateX(angle);
@@ -114,7 +104,8 @@ function draw() {
 		balls[ind].move();
 
 		// check for colissions
-		balls[ind].boxcolission();
+		//balls[ind].boxcolission();
+		balls[ind].spherecolission();
 		for (let indother = 0; indother < ind; indother++) {
 			balls[ind].ballcolission(balls[indother]);
 		}
@@ -133,14 +124,19 @@ function draw() {
 	fill(72,45,20,100);
 	stroke(18,11,5);
 	strokeWeight(1);
-	box(boxwidth,boxheight,boxdepth);
+	rectMode(CENTER);
+	translate(xbox,ybox,zbox);
+	//box(boxwidth,boxheight,boxdepth);
+	translate(-xbox,-ybox,-zbox);
+	//noStroke();
+	conductor  = sphere(sphereDiameter);
+	//torus(300,30,4,12);
 
-
-	angle += 0.0005;
+	//angle += 0.0005;
 }
 
 function resetCamera(){
-	camera(0,0,2*(height/2.0)/tan(PI*30.0/180.0),  0,0,0,  0,1,0);
+	camera(0,0,2.7*(height/2.0)/tan(PI*30.0/180.0),  0,0,0,  0,1,0);
 	angle = 0;
 }
 
@@ -149,7 +145,7 @@ function resetSketch() {
 	//delete previous particles
 	balls = [];
 	Nparticles = sliderParticles.value();
-	elforce = 100000/Nparticles;
+	forceStrength = forceCoefficient/Nparticles;
 
 	//create new particles
 	let ip;
@@ -158,28 +154,28 @@ function resetSketch() {
 
 		let diameter = boxwidth/50;
 		let radius = diameter/2;
-		let x = random(radius,boxwidth-radius);
-		let y = random(radius,boxheight-radius);
-		let z = random(radius,boxdepth-radius);
+		let x = xbox + random(-boxwidth/2 + radius, boxwidth/2-radius);
+		let y = ybox + random(-boxheight/2 + radius, boxheight/2-radius);
+		let z = zbox + random(-boxdepth/2 + radius, boxdepth/2-radius);
 
-		if (ip>0){
-			valid = false;
-			while (valid==false){
-				x = random(radius,boxwidth-radius);
-				y = random(radius,boxheight-radius);
-				z = random(radius,boxdepth-radius);
-				overlap = false;
-				for (ip2=0; ip2<balls.length; ip2++){
-					dist = Math.sqrt(pow((x-balls[ip2].x),2)+pow((y-balls[ip2].y),2)+pow((z-balls[ip2].z),2))
-					if (dist<=diameter){
-						overlap = true;
-					}
-				}
-				if (overlap == false){
-					valid = true;
-				}
-			}
-		}
+//		if (ip>0){
+//			valid = false;
+//			while (valid==false){
+//				x = random(radius,boxwidth-radius);
+//				y = random(radius,boxwidth-radius);
+//				z = random(radius,boxwidth-radius);
+//				overlap = false;
+//				for (ip2=0; ip2<balls.length; ip2++){
+//					dist = Math.sqrt(pow((x-balls[ip2].x),2)+pow((y-balls[ip2].y),2)+pow((z-balls[ip2].z),2))
+//					if (dist<=diameter){
+//						overlap = true;
+//					}
+//				}
+//				if (overlap == false){
+//					valid = true;
+//				}
+//			}
+//		}
 
 		let velocity = 10;
 		let vx = random(-velocity, velocity)/Math.sqrt(3);

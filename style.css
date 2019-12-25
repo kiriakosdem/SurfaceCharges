@@ -27,8 +27,8 @@ canvas:active{
 #jscode{
 	padding: 0rem;
 	margin: 0rem;
-	height: 100%;
-	width: 100%;
+	min-height: 100%;
+	max-width: 100%;
 	background-color: teal;
 }
 
@@ -56,6 +56,9 @@ background-size: contain;
 	cursor: pointer;
 }
 
+.mybutton:active{
+	background-color: darkblue;
+}
 
 .slider {
   -webkit-appearance: none;
